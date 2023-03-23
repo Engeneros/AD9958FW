@@ -1,0 +1,13 @@
+*.bak
+*.crf
+*.d
+*.i
+*.o
+*.htm
+*.map
+*.lnp
+o/
+listing/
+RTE/
+JLinkLog.txt
+SPI.uvguix.*
