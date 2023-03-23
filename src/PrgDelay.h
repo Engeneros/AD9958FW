@@ -3,6 +3,7 @@
 
 
 void DelayMs(unsigned int mSec);
+void DelayUs(unsigned int uSec);
 
 void wait2 (void);
 

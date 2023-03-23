@@ -31,8 +31,9 @@ int main(void)
 	uint32_t mVlt = 0, dataRd = 0;
 //	SPIifc spi1(GPIOA, 3);
 //	AD5761 ad5761(GPIOA, 3);
-	AD9958 dds(GPIOA, 3);
+/////////////	AD9958 dds(GPIOA, 3);
 	char outStr[64];
+	GPOut
 	while(1)
 	{
 //		spi1.SendData(++spiData);
@@ -50,8 +51,8 @@ int main(void)
 //		ad5761 -= mVlt;
 	//	ad5761.SendData(0x3AAAA);
 		//dataRd = ad5761.ReadRegData(0xB);
-		dds.Set3WireIfc();
-		dataRd = dds.ReadReg(adddrrrr, 2);
+//		dds.Set3WireIfc();
+//		dataRd = dds.ReadReg(adddrrrr, 2);
 		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
 		UART1_SendString(outStr, strlen(outStr));
 //		voltage = (voltage < 4500.0)? voltage + 150.0 : 0.0;

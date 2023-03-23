@@ -130,9 +130,15 @@ void SPIifc::TxRx(char* ioBuf, unsigned int bitNum)
 }
 
 //---------------2Ch 500 MSpS DDS generator--------------------
-AD9958::AD9958(GPIO_TypeDef* cs_port, uint8_t cs_pin) : SPIifc (cs_port, cs_pin, SPI_IFC_AD9958)
+AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958), csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
 {
 	DelayMs(5);
+	*csPin = 1;
+	*ioUpdt = 0;
+	*syncIO = 0;
+	*mRst = 1;
+	DelayMs(5);
+	*mRst = 0;
 }
 //-------------------------------------------------------------
 uint32_t AD9958::ReadReg(uint32_t regAddr, uint8_t szBytes)
@@ -149,16 +155,23 @@ uint32_t AD9958::ReadReg(uint32_t regAddr, uint8_t szBytes)
 	}
 	return ret;
 }
+
+void AD9958::IOUpdate()
+{
+	*ioUpdt = 1;
+	DelayUs(100);
+	*ioUpdt = 0;
+}
 //-------------------------------------------------------------
 void AD9958::Set3WireIfc()
-{
-	
+{	
 	SetDataSize16();
 //	Select();
 	uint16_t msg = CH_SEL_RG_ADDR;
 	msg <<= 8;
-	msg |=0xC2;
+	msg |=0xF2;
 	SendData(msg);
+	IOUpdate();
 }
 //-------------------------------------------------------------
 

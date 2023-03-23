@@ -12,7 +12,23 @@ void SetPortToLow( GPIO_TypeDef* port, unsigned char pin );
 
 void SetPortToAlternateOut( GPIO_TypeDef* port, unsigned char pin );
 
-
+class GPOut 
+{
+public:
+	GPOut (GPIO_TypeDef* port, unsigned char pin);
+	void ToLow();
+	void ToHigh();
+	virtual void operator = (int val);
+	virtual	void operator = (bool val);
+	
+	unsigned char GatPinNum() {return pNum;}
+	GPIO_TypeDef* GetPortGroup() {return pGroup;}
+	virtual ~GPOut(){}
+private:
+	GPIO_TypeDef* pGroup;
+	unsigned char pNum;
+	uint32_t pinMask;
+};
 #endif
 
 

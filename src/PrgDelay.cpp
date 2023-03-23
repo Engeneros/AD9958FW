@@ -7,6 +7,13 @@ void DelayMs(unsigned int mSec)
 	{
 	}	
 }
+void DelayUs(unsigned int uSec)
+{
+	unsigned int nTics;
+	for( nTics = uSec; nTics > 0; nTics--)
+	{
+	}	
+}
 
 void wait2 (void)  {
   int  d;

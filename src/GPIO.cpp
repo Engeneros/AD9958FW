@@ -70,4 +70,29 @@ void SetPortToLow( GPIO_TypeDef* port, unsigned char pin )
 	port->BSRR = 1 << pin; 
 }
 
+GPOut::GPOut(GPIO_TypeDef* port, unsigned char pin) : pGroup(port), pNum(pin)
+{
+	SetPortToOutput(pGroup, pNum);
+	pinMask = 1 << pNum;
+}
+void GPOut::ToLow()
+{
+	pGroup->BRR = pinMask;
+}
+
+void GPOut::ToHigh()
+{
+	pGroup->BSRR = pinMask;
+}
+
+void GPOut::operator = (int val)
+{
+	(val == 0)? pGroup->BRR = pinMask : pGroup->BSRR = pinMask;
+}
+
+
+void GPOut::operator = (bool val)
+{
+	(val == false)? pGroup->BRR = pinMask : pGroup->BSRR = pinMask;
+}
 
