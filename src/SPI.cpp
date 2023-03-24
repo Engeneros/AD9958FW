@@ -51,7 +51,7 @@ SPIifc::SPIifc(GPIO_TypeDef* port, uint8_t pin, SPI_IFC_TYPE ifcType) : portCS(p
 	if (ifcType == SPI_IFC_AD9958)
 		SPI1->CR1 = ((1 << 2) | (3 << 3) | ( 1 << 11)); //  second front PCCLK / 16,  8 bit
 	
-	SetPortToOutput(port, pin);
+//	SetPortToOutput(port, pin);
 	SetPortToAlternateOut(GPIOA, 7);
 	SetPortToAlternateOut(GPIOA, 5);
 		
@@ -64,7 +64,7 @@ SPIifc::SPIifc(GPIO_TypeDef* port, uint8_t pin, SPI_IFC_TYPE ifcType) : portCS(p
 
 void inline SPIifc::SetDataSize8()
 {
-	WaitReady();
+	//WaitReady();
 	SPI1->CR1 &= ~ENABLE;
 	SPI1->CR1 &= ~DATA_SIZE_16;
 	SPI1->CR1 |= ENABLE;
@@ -72,7 +72,7 @@ void inline SPIifc::SetDataSize8()
 
 void inline SPIifc::SetDataSize16()
 {
-	WaitReady();
+	//WaitReady();
 	SPI1->CR1 &= ~ENABLE;
 	SPI1->CR1 |= DATA_SIZE_16;
 	SPI1->CR1 |= ENABLE;
@@ -116,7 +116,7 @@ void  inline SPIifc::WaitRxReady()
 
 void SPIifc::SendData(uint32_t data)
 {	
-	WaitReady();	
+//	WaitReady();	
 	portCS->BRR = 1 << pinCS;
 	SPI1->DR = data;
 	WaitReady();
@@ -130,7 +130,8 @@ void SPIifc::TxRx(char* ioBuf, unsigned int bitNum)
 }
 
 //---------------2Ch 500 MSpS DDS generator--------------------
-AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958), csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
+AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958),
+csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
 {
 	DelayMs(5);
 	*csPin = 1;
@@ -143,14 +144,13 @@ AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SP
 //-------------------------------------------------------------
 uint32_t AD9958::ReadReg(uint32_t regAddr, uint8_t szBytes)
 {
-	WaitReady();
+//	WaitReady();
 	uint32_t ret = SPI1->DR;
-	if (szBytes == 2)
+	if (szBytes == 1)
 	{
 		SetDataSize16();
 //		Select();
 		SendData((regAddr  | R_BIT) << 8);
-		WaitRxReady();
 		ret = SPI1->DR;
 	}
 	return ret;

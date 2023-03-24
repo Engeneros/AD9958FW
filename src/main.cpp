@@ -21,7 +21,8 @@ int main(void)
 //	AFIO->MAPR &= (unsigned int) ~(0x00000007 << 24);//
 //	AFIO->MAPR |= (unsigned int) (0x00000002 << 24);
 	
-	SetPortToOutput(GPIOC, 13);
+//	SetPortToOutput(GPIOC, 13);
+	GPOut c13(GPIOC, 13);
 	SetPortToOutput(GPIOB, 8);
 	SetPortToOutput(GPIOB, 9);
 
@@ -33,37 +34,38 @@ int main(void)
 //	AD5761 ad5761(GPIOA, 3);
 /////////////	AD9958 dds(GPIOA, 3);
 	char outStr[64];
-	GPOut
+//
+	GPOut ioUpd (GPIOA, 0);
+	GPOut mstRst(GPIOB, 5);
+	GPOut syncIO(GPIOA, 2);
+	GPOut csel(GPIOA, 3);
+//	AD9958(GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO);	
+	AD9958 dds(&csel, &ioUpd, &mstRst, &syncIO);
 	while(1)
 	{
-//		spi1.SendData(++spiData);
-		GPIOC->BSRR = 1 << 13;
+	//	GPIOC->BSRR = 1 << 13;
 		DelayMs(1000);
-//		spi1.SendData(++spiData);
-//		ad5761.SendData(dacData);
-//		dacData += 0x00010001;
-//		dacData ^= 0x00004100;
-//		ad5761.SetVoltage(voltage % 5000);
-//		for (int i = 0; i < 100; ++i)
-		//mVlt = dataRd;
-//		ad5761 +=  mVlt;
-//		ad5761 <uint32_t>-= voltage;
-//		ad5761 -= mVlt;
-	//	ad5761.SendData(0x3AAAA);
-		//dataRd = ad5761.ReadRegData(0xB);
-//		dds.Set3WireIfc();
-//		dataRd = dds.ReadReg(adddrrrr, 2);
-		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
-		UART1_SendString(outStr, strlen(outStr));
-//		voltage = (voltage < 4500.0)? voltage + 150.0 : 0.0;
-		mVlt += 100;
-		mVlt %= 4500;
-//		voltage = mVlt;
-		GPIOC->BRR = 1 << 13;
+		dds.Set3WireIfc();
+//		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
+//		UART1_SendString(outStr, strlen(outStr));
+	//	GPIOC->BRR = 1 << 13;
+		c13 = 1;
+//		pa0_ioUpd = 1;
+//		pa2_syncIO = 1;
+//		pa4_mstRst = 0;
+//		pa3_cs =1;
+		DelayUs(5);
+		dds.ReadReg(0, 1);
 		DelayMs(200);
-		++adddrrrr;
-		if(adddrrrr > 0x20)
-			adddrrrr = 0;
+		c13 = 0;
+//		pa0_ioUpd = 0;
+//		pa2_syncIO = 0;
+//		DelayMs(100);
+//		pa2_syncIO = 1;
+//		DelayMs(100);
+//		pa2_syncIO = 0;
+//		pa4_mstRst = 1;
+//		pa3_cs = 0;
 		
 	}
 	return 0;
