@@ -44,6 +44,8 @@ public:
 	AD9958(GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO);
 
 	uint32_t ReadReg(uint32_t regAddr, uint8_t szBytes); 
+	uint32_t ReadReg(uint32_t regAddr); 
+	void WriteReg(uint32_t regAddr, uint32_t data); 
 
 	//Configure SDIO_2  (pin #52) as SDO (MISO)
 	void Set3WireIfc();
@@ -54,6 +56,8 @@ private:
 	GPOut* ioUpdt;
 	GPOut* mRst;
 	GPOut* ioSync;
+
+
 
 	static const uint8_t R_BIT = 1 << 7;
 	static const uint8_t CH_SEL_RG_ADDR = 0;

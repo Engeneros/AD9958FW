@@ -130,6 +130,8 @@ void SPIifc::TxRx(char* ioBuf, unsigned int bitNum)
 }
 
 //---------------2Ch 500 MSpS DDS generator--------------------
+
+static const uint8_t reg_szs[] = {1, 3, 2, 3};
 AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958),
 csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
 {
@@ -146,6 +148,11 @@ uint32_t AD9958::ReadReg(uint32_t regAddr, uint8_t szBytes)
 {
 //	WaitReady();
 	uint32_t ret = SPI1->DR;
+//	for (int i = szBytes, i > 0; --i  )
+//	{
+//		Send
+//	
+//	}
 	if (szBytes == 1)
 	{
 		SetDataSize16();
@@ -166,12 +173,58 @@ void AD9958::IOUpdate()
 void AD9958::Set3WireIfc()
 {	
 	SetDataSize16();
+	static unsigned char chans = 0;
 //	Select();
 	uint16_t msg = CH_SEL_RG_ADDR;
 	msg <<= 8;
+	//msg |=0x32 | ((++chans & 3) << 6);
 	msg |=0xF2;
 	SendData(msg);
 	IOUpdate();
+}
+
+
+void AD9958::WriteReg(uint32_t regAddr, uint32_t data)
+{
+	uint32_t bMost = data >> 16;
+	uint32_t bLeast = data & 0xFFFF;
+	if(reg_szs[regAddr] == 3)
+	{
+		SetDataSize16();
+		uint16_t msg = regAddr;
+		msg <<= 8;
+		msg |= bMost;
+		*csPin = 0;
+		SPI1->DR = msg;
+		WaitReady();
+		SPI1->DR = bLeast;
+		WaitReady();
+		*csPin = 1;	
+		IOUpdate();
+	}
+}
+
+uint32_t AD9958::ReadReg(uint32_t regAddr)
+{
+
+	uint32_t ret = 0x1245, tmp = SPI1->DR;;
+	if(reg_szs[regAddr] == 3)
+	{
+		SetDataSize16();
+		uint16_t msg = regAddr | R_BIT;
+		msg <<= 8;
+		*csPin = 0;
+		SPI1->DR = msg;
+		WaitReady();
+		ret = SPI1->DR;
+		SPI1->DR = 0;
+		ret <<= 16;
+		WaitReady();
+		*csPin = 1;	
+		tmp = SPI1->DR;
+		ret |= tmp;
+	}
+	return ret;
 }
 //-------------------------------------------------------------
 

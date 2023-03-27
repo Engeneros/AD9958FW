@@ -41,11 +41,21 @@ int main(void)
 	GPOut csel(GPIOA, 3);
 //	AD9958(GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO);	
 	AD9958 dds(&csel, &ioUpd, &mstRst, &syncIO);
+	int cnt = 0;
+
 	while(1)
 	{
 	//	GPIOC->BSRR = 1 << 13;
 		DelayMs(1000);
 		dds.Set3WireIfc();
+		DelayMs(100);
+		dds.WriteReg (1, (1 << 23) | (20 << 18) );
+		DelayMs(100);
+		dataRd = dds.ReadReg(1);
+		DelayMs(100);
+		sprintf(outStr, "%d - reg1=%x%c%c", ++cnt, dataRd, 13, 10);
+		UART1_SendString(outStr, strlen(outStr));
+		DelayMs(200);
 //		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
 //		UART1_SendString(outStr, strlen(outStr));
 	//	GPIOC->BRR = 1 << 13;
@@ -55,7 +65,9 @@ int main(void)
 //		pa4_mstRst = 0;
 //		pa3_cs =1;
 		DelayUs(5);
-		dds.ReadReg(0, 1);
+		dataRd = dds.ReadReg(0, 1);
+		sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
+		UART1_SendString(outStr, strlen(outStr));
 		DelayMs(200);
 		c13 = 0;
 //		pa0_ioUpd = 0;
