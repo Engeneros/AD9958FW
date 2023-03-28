@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <PrgDelay.h>
+#include <UART1.h>
 
 //void SPI1_IRQHandler (void)
 //{
@@ -130,8 +131,12 @@ void SPIifc::TxRx(char* ioBuf, unsigned int bitNum)
 }
 
 //---------------2Ch 500 MSpS DDS generator--------------------
-
-static const uint8_t reg_szs[] = {1, 3, 2, 3};
+//								CSR  FR1   FR2   CFR	
+static const uint8_t reg_szs[] = {1,  3,    2,    3, 
+//								CFTW  CPOW  ACR  LSRR
+                                  4,   2,    3,   2,   
+//                              RDW	   FDW
+								4,      4     };
 AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958),
 csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
 {
@@ -186,12 +191,13 @@ void AD9958::Set3WireIfc()
 
 void AD9958::WriteReg(uint32_t regAddr, uint32_t data)
 {
-	uint32_t bMost = data >> 16;
-	uint32_t bLeast = data & 0xFFFF;
-	if(reg_szs[regAddr] == 3)
+	uint16_t msg = regAddr;
+	uint8_t dataSz = reg_szs[regAddr];
+	if(dataSz == 3)
 	{
+		uint32_t bMost = data >> 16;
+		uint32_t bLeast = data & 0xFFFF;
 		SetDataSize16();
-		uint16_t msg = regAddr;
 		msg <<= 8;
 		msg |= bMost;
 		*csPin = 0;
@@ -202,16 +208,32 @@ void AD9958::WriteReg(uint32_t regAddr, uint32_t data)
 		*csPin = 1;	
 		IOUpdate();
 	}
+	else if(dataSz == 4)
+	{
+		SetDataSize8();
+		uint16_t msg = regAddr;
+		*csPin = 0;
+		for (int i = 5; i > 0; --i)
+		{
+			SPI1->DR = msg;
+			msg = data >> 24;
+			data <<= 8;
+			WaitReady();
+		}
+		*csPin = 1;
+		IOUpdate();
+	}
 }
 
 uint32_t AD9958::ReadReg(uint32_t regAddr)
 {
 
 	uint32_t ret = 0x1245, tmp = SPI1->DR;;
-	if(reg_szs[regAddr] == 3)
+	uint16_t msg = regAddr | R_BIT;
+	uint8_t dataSz = reg_szs[regAddr];
+	if(dataSz == 3)
 	{
-		SetDataSize16();
-		uint16_t msg = regAddr | R_BIT;
+		SetDataSize16();		
 		msg <<= 8;
 		*csPin = 0;
 		SPI1->DR = msg;
@@ -223,6 +245,21 @@ uint32_t AD9958::ReadReg(uint32_t regAddr)
 		*csPin = 1;	
 		tmp = SPI1->DR;
 		ret |= tmp;
+	}
+	else if(dataSz == 4)
+	{
+		SetDataSize8();
+		*csPin = 0;
+		for (int i = 5; i > 0; --i)
+		{
+			SPI1->DR = msg;
+			msg = 0;
+			ret <<= 8;
+			WaitReady();
+			tmp = SPI1->DR;
+			ret |= tmp & 0x000000FF;
+		}
+		*csPin = 1;
 	}
 	return ret;
 }

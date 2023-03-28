@@ -42,20 +42,37 @@ int main(void)
 //	AD9958(GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO);	
 	AD9958 dds(&csel, &ioUpd, &mstRst, &syncIO);
 	int cnt = 0;
-
+	DelayMs(1000);
+	dds.Set3WireIfc();
+	DelayMs(100);
+	dds.WriteReg (1, (1 << 23) | (20 << 18) );
+	DelayMs(100);
+	dataRd = dds.ReadReg(1);
+	DelayMs(100);
+	sprintf(outStr, "%d - reg1=%x%c%c", ++cnt, dataRd, 13, 10);
+	UART1_SendString(outStr, strlen(outStr));
+	DelayUs(5);
+	dataRd = dds.ReadReg(0, 1);
+	sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
+	UART1_SendString(outStr, strlen(outStr));
+	DelayMs(200);
+	double freq = 100.0, tmp;
+	uint32_t ftW;
 	while(1)
 	{
 	//	GPIOC->BSRR = 1 << 13;
-		DelayMs(1000);
-		dds.Set3WireIfc();
+		tmp = freq * (double)( 0xffffffff)/ 500000000.0;
+		ftW = (uint32_t) tmp;
+		freq *= 1.002;
+		if ( freq > 20000000.0)
+			freq = 100.0;
+		dds.WriteReg (4, ftW);
 		DelayMs(100);
-		dds.WriteReg (1, (1 << 23) | (20 << 18) );
-		DelayMs(100);
-		dataRd = dds.ReadReg(1);
-		DelayMs(100);
-		sprintf(outStr, "%d - reg1=%x%c%c", ++cnt, dataRd, 13, 10);
-		UART1_SendString(outStr, strlen(outStr));
-		DelayMs(200);
+//		dataRd = dds.ReadReg(4);
+//		DelayMs(100);
+//		sprintf(outStr, "%d - reg4=%x%c%c", ++cnt, dataRd, 13, 10);
+//		UART1_SendString(outStr, strlen(outStr));
+		
 //		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
 //		UART1_SendString(outStr, strlen(outStr));
 	//	GPIOC->BRR = 1 << 13;
