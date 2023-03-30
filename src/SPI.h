@@ -9,6 +9,21 @@ enum SPI_IFC_TYPE
 	SPI_IFC_AD9958 = 0
 };
 
+enum REGS_AD9958
+{
+	CSR,
+	FR1,
+	FR2,
+	CFR,
+	CFTM,
+	CPOW,
+	ACR,
+	LSRR,
+	RDW,
+	FDW
+};
+	
+
 class SPIifc
 {
 public:
@@ -42,11 +57,12 @@ class AD9958 : public SPIifc
 {
 public:
 	AD9958(GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO);
-
 	uint32_t ReadReg(uint32_t regAddr, uint8_t szBytes); 
 	uint32_t ReadReg(uint32_t regAddr); 
-	void WriteReg(uint32_t regAddr, uint32_t data); 
-
+	void WriteReg(uint32_t regAddr, uint32_t data, bool justNow = true); 
+	void PrepareToJump();
+	void Jump();
+	void DisableJamp();
 	//Configure SDIO_2  (pin #52) as SDO (MISO)
 	void Set3WireIfc();
 	void IOUpdate();
@@ -56,11 +72,10 @@ private:
 	GPOut* ioUpdt;
 	GPOut* mRst;
 	GPOut* ioSync;
-
-
-
+	uint32_t valFR2;
 	static const uint8_t R_BIT = 1 << 7;
 	static const uint8_t CH_SEL_RG_ADDR = 0;
+	
 };
 
 class AD5761 : public SPIifc

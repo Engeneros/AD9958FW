@@ -56,18 +56,63 @@ int main(void)
 	sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
 	UART1_SendString(outStr, strlen(outStr));
 	DelayMs(200);
+	dds.WriteReg (2, 3 << 6 );
+	DelayMs(100);
+	dataRd = dds.ReadReg(2);
+	DelayMs(100);
+	sprintf(outStr, "%d - reg2=%x%c%c", ++cnt, dataRd, 13, 10);
+	UART1_SendString(outStr, strlen(outStr));
+	DelayUs(5);
 	double freq = 100.0, tmp;
 	uint32_t ftW;
+	int cntdd  = 0;
+	
+	tmp = 1000000.0 * (double)( 0xffffffff) / 500000000.0;
+	ftW = (uint32_t) tmp;
+	dds.WriteReg (4, ftW);
+	DelayMs(100);
+	
 	while(1)
 	{
 	//	GPIOC->BSRR = 1 << 13;
-		tmp = freq * (double)( 0xffffffff)/ 500000000.0;
-		ftW = (uint32_t) tmp;
-		freq *= 1.002;
-		if ( freq > 20000000.0)
-			freq = 100.0;
-		dds.WriteReg (4, ftW);
-		DelayMs(100);
+		if ((++cntdd % 20) == 0)
+		{
+			DelayMs(100);
+			dataRd = dds.ReadReg(1);
+			DelayMs(100);
+			sprintf(outStr, "%d - reg1=%x%c%c", ++cnt, dataRd, 13, 10);
+			UART1_SendString(outStr, strlen(outStr));
+			DelayMs(5);
+			dataRd = dds.ReadReg(0, 1);
+			sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
+			UART1_SendString(outStr, strlen(outStr));
+			DelayMs(10);
+			
+			dds.PrepareToJump();
+			dataRd = dds.ReadReg(0, FR2);
+			sprintf(outStr, "%d - reg2Bfr=%x%c%c", ++cnt, dataRd, 13, 10);
+			UART1_SendString(outStr, strlen(outStr));
+			DelayMs(10);
+			
+			dds.Jump();
+			dataRd = dds.ReadReg(0, FR2);
+			sprintf(outStr, "%d - reg2aftJmp=%x%c%c", ++cnt, dataRd, 13, 10);
+			UART1_SendString(outStr, strlen(outStr));
+			DelayMs(10);
+			
+			dds.DisableJamp();
+			dataRd = dds.ReadReg(0, FR2);
+			sprintf(outStr, "%d - reg2Bfr=%x%c%c", ++cnt, dataRd, 13, 10);
+			UART1_SendString(outStr, strlen(outStr));
+			DelayMs(10);
+		}			
+//		tmp = freq * (double)( 0xffffffff)/ 500000000.0;
+//		ftW = (uint32_t) tmp;
+//		freq *= 1.002;
+//		if ( freq > 20000000.0)
+//			freq = 100.0;
+//		dds.WriteReg (4, ftW);
+//		DelayMs(100);
 //		dataRd = dds.ReadReg(4);
 //		DelayMs(100);
 //		sprintf(outStr, "%d - reg4=%x%c%c", ++cnt, dataRd, 13, 10);
@@ -80,12 +125,13 @@ int main(void)
 //		pa0_ioUpd = 1;
 //		pa2_syncIO = 1;
 //		pa4_mstRst = 0;
-//		pa3_cs =1;
-		DelayUs(5);
-		dataRd = dds.ReadReg(0, 1);
-		sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
-		UART1_SendString(outStr, strlen(outStr));
-		DelayMs(200);
+////		pa3_cs =1;
+//	DelayUs(5);
+//	dataRd = dds.ReadReg(0, 1);
+//	sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
+//	UART1_SendString(outStr, strlen(outStr));
+		DelayMs(1000);
+//	DelayMs(200);
 		c13 = 0;
 //		pa0_ioUpd = 0;
 //		pa2_syncIO = 0;

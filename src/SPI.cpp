@@ -130,12 +130,12 @@ void SPIifc::TxRx(char* ioBuf, unsigned int bitNum)
 	
 }
 
-//---------------2Ch 500 MSpS DDS generator--------------------
-//								CSR  FR1   FR2   CFR	
+////---------------2Ch 500 MSpS DDS generator--------------------
+////							CSR  FR1   FR2   CFR	
 static const uint8_t reg_szs[] = {1,  3,    2,    3, 
-//								CFTW  CPOW  ACR  LSRR
-                                  4,   2,    3,   2,   
-//                              RDW	   FDW
+////							CFTW  CPOW  ACR  LSRR
+                                 4,   2,    3,   2,   
+////                            RDW	   FDW
 								4,      4     };
 AD9958::AD9958 (GPOut* cSel, GPOut* ioUpdate, GPOut* mReset, GPOut* syncIO) : SPIifc (cSel->GetPortGroup(), cSel->GatPinNum(), SPI_IFC_AD9958),
 csPin(cSel), ioUpdt(ioUpdate), mRst(mReset), ioSync (syncIO)   
@@ -189,11 +189,11 @@ void AD9958::Set3WireIfc()
 }
 
 
-void AD9958::WriteReg(uint32_t regAddr, uint32_t data)
+void AD9958::WriteReg(uint32_t regAddr, uint32_t data, bool justNow)
 {
 	uint16_t msg = regAddr;
-	uint8_t dataSz = reg_szs[regAddr];
-	if(dataSz == 3)
+	uint8_t rgLn = reg_szs[regAddr];
+	if(rgLn == 3)
 	{
 		uint32_t bMost = data >> 16;
 		uint32_t bLeast = data & 0xFFFF;
@@ -206,23 +206,59 @@ void AD9958::WriteReg(uint32_t regAddr, uint32_t data)
 		SPI1->DR = bLeast;
 		WaitReady();
 		*csPin = 1;	
-		IOUpdate();
+//		IOUpdate();
 	}
-	else if(dataSz == 4)
+//	else if(dataSz == 4)
+//	{
+//		SetDataSize8();
+//		uint16_t msg = regAddr;
+//		*csPin = 0;
+//		for (int i = 5; i > 0; --i)
+//		{
+//			SPI1->DR = msg;
+//			msg = data >> 24;
+//			data <<= 8;
+//			WaitReady();
+//		}
+//		*csPin = 1;
+//		IOUpdate();
+//	}
+	else if((rgLn == 2) || (rgLn  == 4))
 	{
 		SetDataSize8();
 		uint16_t msg = regAddr;
 		*csPin = 0;
-		for (int i = 5; i > 0; --i)
+		for (int i = (rgLn + 1); i > 0; --i)
 		{
 			SPI1->DR = msg;
-			msg = data >> 24;
+			msg = data >> (8 * (rgLn - 1)) & 0x000000ff;
 			data <<= 8;
 			WaitReady();
 		}
 		*csPin = 1;
-		IOUpdate();
+//		IOUpdate();
 	}
+	if((justNow != false) && (rgLn > 1) && (rgLn < 5))
+		IOUpdate();
+}
+
+void AD9958::PrepareToJump()
+{
+	valFR2 = ReadReg(FR2);
+	WriteReg(FR2, valFR2 | 0x2000, false);
+}
+
+void AD9958::Jump()
+{
+	IOUpdate();
+//	valFR2 &= 0xdfff;
+//	WriteReg(FR2, valFR2);
+}
+
+void AD9958::DisableJamp()
+{
+	valFR2 &= 0xdfff;
+	WriteReg(FR2, valFR2);
 }
 
 uint32_t AD9958::ReadReg(uint32_t regAddr)
@@ -230,8 +266,8 @@ uint32_t AD9958::ReadReg(uint32_t regAddr)
 
 	uint32_t ret = 0x1245, tmp = SPI1->DR;;
 	uint16_t msg = regAddr | R_BIT;
-	uint8_t dataSz = reg_szs[regAddr];
-	if(dataSz == 3)
+	uint8_t rgLn = reg_szs[regAddr];
+	if(rgLn == 3)
 	{
 		SetDataSize16();		
 		msg <<= 8;
@@ -246,11 +282,26 @@ uint32_t AD9958::ReadReg(uint32_t regAddr)
 		tmp = SPI1->DR;
 		ret |= tmp;
 	}
-	else if(dataSz == 4)
+//	else if(rgLn == 4)
+//	{
+//		SetDataSize8();
+//		*csPin = 0;
+//		for (int i = 5; i > 0; --i)
+//		{
+//			SPI1->DR = msg;
+//			msg = 0;
+//			ret <<= 8;
+//			WaitReady();
+//			tmp = SPI1->DR;
+//			ret |= tmp & 0x000000FF;
+//		}
+//		*csPin = 1;
+//	}
+	else if((rgLn == 2) || (rgLn == 4))
 	{
 		SetDataSize8();
 		*csPin = 0;
-		for (int i = 5; i > 0; --i)
+		for (int i = (rgLn + 1); i > 0; --i)
 		{
 			SPI1->DR = msg;
 			msg = 0;
