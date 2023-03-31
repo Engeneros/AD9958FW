@@ -21,10 +21,10 @@ int main(void)
 //	AFIO->MAPR &= (unsigned int) ~(0x00000007 << 24);//
 //	AFIO->MAPR |= (unsigned int) (0x00000002 << 24);
 	
-//	SetPortToOutput(GPIOC, 13);
 	GPOut c13(GPIOC, 13);
-	SetPortToOutput(GPIOB, 8);
-	SetPortToOutput(GPIOB, 9);
+    GPOut b8(GPIOB, 8);
+
+	GPOut b9(GPIOB, 9);
 
 //	SetPortToInput(GPIOB, 3);
 	uint16_t spiData = 0x5555;
@@ -77,6 +77,7 @@ int main(void)
 	//	GPIOC->BSRR = 1 << 13;
 		if ((++cntdd % 20) == 0)
 		{
+			c13 = 0;
 			DelayMs(100);
 			dataRd = dds.ReadReg(1);
 			DelayMs(100);
@@ -88,23 +89,27 @@ int main(void)
 			UART1_SendString(outStr, strlen(outStr));
 			DelayMs(10);
 			
+			b9 = 0;
 			dds.PrepareToJump();
-			dataRd = dds.ReadReg(0, FR2);
+			dataRd = dds.ReadReg(FR2);
 			sprintf(outStr, "%d - reg2Bfr=%x%c%c", ++cnt, dataRd, 13, 10);
 			UART1_SendString(outStr, strlen(outStr));
 			DelayMs(10);
 			
+			b8 = 0;
 			dds.Jump();
-			dataRd = dds.ReadReg(0, FR2);
+			dataRd = dds.ReadReg(FR2);
 			sprintf(outStr, "%d - reg2aftJmp=%x%c%c", ++cnt, dataRd, 13, 10);
 			UART1_SendString(outStr, strlen(outStr));
 			DelayMs(10);
-			
+			b9 = 1; 
 			dds.DisableJamp();
-			dataRd = dds.ReadReg(0, FR2);
-			sprintf(outStr, "%d - reg2Bfr=%x%c%c", ++cnt, dataRd, 13, 10);
+			b8 = 1;
+			dataRd = dds.ReadReg(FR2);
+			sprintf(outStr, "%d - reg2Dsbl=%x%c%c", ++cnt, dataRd, 13, 10);
 			UART1_SendString(outStr, strlen(outStr));
 			DelayMs(10);
+			c13 = 1;
 		}			
 //		tmp = freq * (double)( 0xffffffff)/ 500000000.0;
 //		ftW = (uint32_t) tmp;
@@ -121,7 +126,7 @@ int main(void)
 //		sprintf(outStr, "wr=%d ; rd=%d", mVlt, dataRd);
 //		UART1_SendString(outStr, strlen(outStr));
 	//	GPIOC->BRR = 1 << 13;
-		c13 = 1;
+		
 //		pa0_ioUpd = 1;
 //		pa2_syncIO = 1;
 //		pa4_mstRst = 0;
@@ -130,9 +135,9 @@ int main(void)
 //	dataRd = dds.ReadReg(0, 1);
 //	sprintf(outStr, "%d - reg0=%x%c%c", ++cnt, dataRd, 13, 10);
 //	UART1_SendString(outStr, strlen(outStr));
-		DelayMs(1000);
+		DelayMs(100);
 //	DelayMs(200);
-		c13 = 0;
+		
 //		pa0_ioUpd = 0;
 //		pa2_syncIO = 0;
 //		DelayMs(100);
