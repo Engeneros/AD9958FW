@@ -14,5 +14,6 @@ Objects/
 Listings/
 DebugConfig/
 RTE/
+spDiv/net/W5500/W5500Ping
 JLinkLog.txt
 SPI.uvguix.*
